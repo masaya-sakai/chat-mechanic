@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>mechanic work chat</h1>
+    <!-- 入力場所 -->
+    <form>
+        <fieldset>
+            <legend>作業入力画面</legend>
+            <div>
+                name: <input type="text" id="name">
+            </div>
+            <div>
+                text: <input type="text" id="text">
+            </div>
+            <div>
+                poit: <input type="text" id="point">
+            </div>
+            <div>
+                working : <input type="text" id="working">
+            </div>
+            <div>
+                <button type="button" id="send">send</button>
+            </div>
+        </fieldset>
+    </form>
+
+    <!-- データ出力場所 -->
+    <ul id="output"></ul>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+        function convertTimestampToDatetime(timestamp) {
+            const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+            const Y = _d.getFullYear();
+            const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+            const d = _d.getDate().toString().padStart(2, '0');
+            const H = _d.getHours().toString().padStart(2, '0');
+            const i = _d.getMinutes().toString().padStart(2, '0');
+            const s = _d.getSeconds().toString().padStart(2, '0');
+            return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+        }
+
+    </script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            serverTimestamp,
+            onSnapshot,
+            query,
+            orderBy,
+        } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        $("#send").on("click", function () {
+            const postData = {
+                name: $("#name").val(),
+                text: $("#text").val(),
+                point: $("#point").val(),
+                working: $("#working").val(),
+                time: serverTimestamp(),
+
+            };
+            addDoc(collection(db, "chat-mechanic"), postData);
+            $("#name").val("");
+            $("#text").val("");
+            $("#point").val("");
+            $("#working").val("");
+
+        });
+        const q = query(collection(db, "chat-mechanic"), orderBy("time", "desc"));
+
+
+
+        onSnapshot(q, (querySnapshot) => {
+            //console.log(querySnapshot.docs);
+            const documents = [];
+            querySnapshot.docs.forEach(function (doc) {
+                const document = {
+                    id: doc.id,
+                    data: doc.data(),
+                };
+                documents.push(document);
+            });
+
+            console.log(documents);
+
+            const htmlElements = [];
+            documents.forEach(function (doc) {
+                htmlElements.push(`
+                 <li id="${doc.id}">
+                   <p>${doc.data.name} at ${convertTimestampToDatetime(doc.data.time.seconds)}</p>
+                   <p>${doc.data.point}</p>
+                   <p>${doc.data.working}</p>
+                 </li>
+                `);
+            });
+
+            $("#output").html(htmlElements);
+
+        });
+
+
+
+
+    </script>
+
+
+</body>
+
+</html>
